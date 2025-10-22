@@ -1,15 +1,34 @@
-import { Home, ListMusic, Upload, History, Info, Music } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { Home, ListMusic, Upload, History, Info, Music, LogOut } from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const Sidebar = () => {
-  const menuItems = [
+  const { user, isAdmin, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const baseMenuItems = [
     { icon: Home, label: "Home", path: "/" },
     { icon: ListMusic, label: "Playlist", path: "/playlist" },
-    { icon: Upload, label: "Upload", path: "/upload" },
     { icon: History, label: "History", path: "/history" },
     { icon: Info, label: "About", path: "/about" },
   ];
+
+  // Only show upload for admin users
+  const menuItems = isAdmin
+    ? [
+        ...baseMenuItems.slice(0, 2),
+        { icon: Upload, label: "Upload", path: "/upload" },
+        ...baseMenuItems.slice(2),
+      ]
+    : baseMenuItems;
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/auth");
+  };
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-sidebar border-r border-sidebar-border flex flex-col z-50">
@@ -48,8 +67,43 @@ const Sidebar = () => {
         ))}
       </nav>
 
-      {/* Footer */}
-      <div className="p-4 border-t border-sidebar-border">
+      {/* User Profile Footer */}
+      <div className="p-4 border-t border-sidebar-border space-y-3">
+        {user ? (
+          <>
+            <div className="flex items-center gap-3">
+              <Avatar className="w-10 h-10">
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  {user.email?.[0].toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{user.email}</p>
+                {isAdmin && (
+                  <span className="text-xs text-primary font-semibold">Admin</span>
+                )}
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={handleSignOut}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
+          </>
+        ) : (
+          <Button
+            variant="default"
+            size="sm"
+            className="w-full"
+            onClick={() => navigate("/auth")}
+          >
+            Sign In
+          </Button>
+        )}
         <div className="text-xs text-muted-foreground text-center">
           © 2025 Monk Entertainment
         </div>
