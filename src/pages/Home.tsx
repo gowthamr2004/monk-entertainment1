@@ -1,11 +1,19 @@
 import { useState, useEffect } from "react";
-import Header from "@/components/Header";
 import SongCard from "@/components/SongCard";
 import ParticleBackground from "@/components/ParticleBackground";
 import AudioPlayer from "@/components/AudioPlayer";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Song {
   id: string;
@@ -146,40 +154,74 @@ const Home = () => {
     <div className="min-h-screen relative">
       <ParticleBackground />
 
-      <Header
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        selectedType={selectedType}
-        onTypeChange={setSelectedType}
-        selectedLanguage={selectedLanguage}
-        onLanguageChange={setSelectedLanguage}
-      />
-
-      <main className="container mx-auto px-4 py-8 pb-32">
-        <div className="mb-8 animate-fade-in">
-          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-green-400 bg-clip-text text-transparent">
+      <main className="px-8 py-6 pb-32">
+        {/* Search and Filters Section */}
+        <div className="mb-10 animate-fade-in">
+          <h1 className="text-5xl font-bold mb-8 text-foreground tracking-tight">
             Discover Music
           </h1>
-          <p className="text-muted-foreground">
+          
+          <div className="flex items-center gap-4 mb-6">
+            {/* Search Bar */}
+            <div className="flex-1 max-w-xl relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search songs, artists, movies..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 h-11 bg-card/50 border-border/50 rounded-xl focus-visible:ring-primary/30"
+              />
+            </div>
+
+            {/* Filters */}
+            <Select value={selectedType} onValueChange={setSelectedType}>
+              <SelectTrigger className="w-36 h-11 bg-card/50 border-border/50 rounded-xl">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="Song">Song</SelectItem>
+                <SelectItem value="BGM">BGM</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+              <SelectTrigger className="w-36 h-11 bg-card/50 border-border/50 rounded-xl">
+                <SelectValue placeholder="Language" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Languages</SelectItem>
+                <SelectItem value="Tamil">Tamil</SelectItem>
+                <SelectItem value="Telugu">Telugu</SelectItem>
+                <SelectItem value="Hindi">Hindi</SelectItem>
+                <SelectItem value="Malayalam">Malayalam</SelectItem>
+                <SelectItem value="English">English</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <p className="text-muted-foreground text-sm">
             {filteredSongs.length}{" "}
-            {filteredSongs.length === 1 ? "song" : "songs"} available
+            {filteredSongs.length === 1 ? "song" : "songs"}
           </p>
         </div>
 
+        {/* Songs Grid */}
         {filteredSongs.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-xl text-muted-foreground">No songs found</p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Try adjusting your filters
+          <div className="py-32">
+            <p className="text-2xl text-muted-foreground font-medium">No songs found</p>
+            <p className="text-sm text-muted-foreground/60 mt-2">
+              Try adjusting your search or filters
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-6">
             {filteredSongs.map((song, index) => (
               <div
                 key={song.id}
                 className="animate-fade-in"
-                style={{ animationDelay: `${index * 0.05}s` }}
+                style={{ animationDelay: `${index * 0.03}s` }}
               >
                 <SongCard
                   song={{
