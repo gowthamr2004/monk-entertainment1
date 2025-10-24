@@ -1,11 +1,21 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Clock, Music } from "lucide-react";
-import { Song } from "@/types/song";
 import { Button } from "@/components/ui/button";
 
+interface HistorySong {
+  id: string;
+  song_name: string;
+  artist_name: string;
+  movie_name: string;
+  type: "Song" | "BGM";
+  language: string;
+  image_url: string;
+  audio_url: string;
+}
+
 const History = () => {
-  const [history, setHistory] = useState<Song[]>([]);
+  const [history, setHistory] = useState<HistorySong[]>([]);
 
   useEffect(() => {
     const savedHistory = localStorage.getItem("history");
@@ -52,16 +62,16 @@ const History = () => {
                 className="p-4 bg-card border-border hover:bg-card/80 transition-all animate-fade-in"
                 style={{ animationDelay: `${index * 0.05}s` }}
               >
-                <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4">
                   <img
-                    src={song.imageUrl}
-                    alt={song.songName}
+                    src={song.image_url}
+                    alt={song.song_name}
                     className="w-16 h-16 rounded-lg object-cover"
                   />
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground truncate">{song.songName}</h3>
-                    <p className="text-sm text-muted-foreground truncate">{song.artistName}</p>
-                    <p className="text-xs text-muted-foreground truncate">{song.movieName}</p>
+                    <h3 className="font-semibold text-foreground truncate">{song.song_name}</h3>
+                    <p className="text-sm text-muted-foreground truncate">{song.artist_name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{song.movie_name}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs bg-secondary px-2 py-1 rounded">{song.type}</span>
