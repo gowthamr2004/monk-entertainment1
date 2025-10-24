@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Song } from "@/types/song";
 import { Badge } from "@/components/ui/badge";
+import { AddToPlaylistDialog } from "./AddToPlaylistDialog";
 
 interface SongCardProps {
   song: Song;
@@ -52,25 +53,28 @@ const SongCard = ({ song, onPlay, onDownload, onDelete, isAdmin }: SongCardProps
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            className="flex-1"
-            onClick={() => onDownload(song)}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Download
-          </Button>
-          {isAdmin && onDelete && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
             <Button
               size="sm"
-              variant="destructive"
-              onClick={() => onDelete(song.id)}
+              variant="outline"
+              className="flex-1"
+              onClick={() => onDownload(song)}
             >
-              <Trash2 className="w-4 h-4" />
+              <Download className="w-4 h-4 mr-2" />
+              Download
             </Button>
-          )}
+            {isAdmin && onDelete && (
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => onDelete(song.id)}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+          <AddToPlaylistDialog songId={song.id} songName={song.songName} />
         </div>
       </div>
     </Card>
