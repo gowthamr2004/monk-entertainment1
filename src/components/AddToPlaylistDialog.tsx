@@ -12,6 +12,8 @@ import {
 import { Playlist } from "@/types/song";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AddToPlaylistDialogProps {
   songId: string;
@@ -19,36 +21,60 @@ interface AddToPlaylistDialogProps {
 }
 
 export const AddToPlaylistDialog = ({ songId, songName }: AddToPlaylistDialogProps) => {
+  const { user } = useAuth();
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (open) {
-      const savedPlaylists = localStorage.getItem("playlists");
-      if (savedPlaylists) {
-        setPlaylists(JSON.parse(savedPlaylists));
-      }
+    if (open && user) {
+      fetchPlaylists();
     }
-  }, [open]);
+  }, [open, user]);
 
-  const handleAddToPlaylist = (playlistId: string) => {
-    const savedPlaylists = localStorage.getItem("playlists");
-    if (!savedPlaylists) return;
+  const fetchPlaylists = async () => {
+    if (!user) return;
 
-    const parsedPlaylists: Playlist[] = JSON.parse(savedPlaylists);
-    const playlistIndex = parsedPlaylists.findIndex((p) => p.id === playlistId);
+    const { data, error } = await supabase
+      .from("playlists")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      toast.error("Failed to fetch playlists");
+      return;
+    }
+
+    const userPlaylists: Playlist[] = data.map((playlist) => ({
+      id: playlist.id,
+      name: playlist.name,
+      songs: playlist.song_ids,
+      createdAt: new Date(playlist.created_at),
+    }));
+
+    setPlaylists(userPlaylists);
+  };
+
+  const handleAddToPlaylist = async (playlistId: string) => {
+    const playlist = playlists.find((p) => p.id === playlistId);
     
-    if (playlistIndex === -1) return;
+    if (!playlist) return;
 
-    const playlist = parsedPlaylists[playlistIndex];
-    
     if (playlist.songs.includes(songId)) {
       toast.error("Song already in this playlist");
       return;
     }
 
-    playlist.songs.push(songId);
-    localStorage.setItem("playlists", JSON.stringify(parsedPlaylists));
+    const updatedSongs = [...playlist.songs, songId];
+
+    const { error } = await supabase
+      .from("playlists")
+      .update({ song_ids: updatedSongs })
+      .eq("id", playlistId);
+
+    if (error) {
+      toast.error("Failed to add song to playlist");
+      return;
+    }
     
     toast.success(`Added "${songName}" to "${playlist.name}"`);
     setOpen(false);

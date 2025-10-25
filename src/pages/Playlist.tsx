@@ -11,7 +11,7 @@ import AudioPlayer from "@/components/AudioPlayer";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Playlist = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const [playlists, setPlaylists] = useState<PlaylistType[]>([]);
   const [newPlaylistName, setNewPlaylistName] = useState("");
   const [selectedPlaylist, setSelectedPlaylist] = useState<PlaylistType | null>(null);
@@ -20,11 +20,33 @@ const Playlist = () => {
   const [queue, setQueue] = useState<Song[]>([]);
 
   useEffect(() => {
-    const savedPlaylists = localStorage.getItem("playlists");
-    if (savedPlaylists) {
-      setPlaylists(JSON.parse(savedPlaylists));
+    if (user) {
+      fetchPlaylists();
     }
-  }, []);
+  }, [user]);
+
+  const fetchPlaylists = async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("playlists")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      toast.error("Failed to fetch playlists");
+      return;
+    }
+
+    const userPlaylists: PlaylistType[] = data.map((playlist) => ({
+      id: playlist.id,
+      name: playlist.name,
+      songs: playlist.song_ids,
+      createdAt: new Date(playlist.created_at),
+    }));
+
+    setPlaylists(userPlaylists);
+  };
 
   useEffect(() => {
     if (selectedPlaylist) {
@@ -63,22 +85,40 @@ const Playlist = () => {
     setPlaylistSongs(songs);
   };
 
-  const handleCreatePlaylist = () => {
+  const handleCreatePlaylist = async () => {
     if (!newPlaylistName.trim()) {
       toast.error("Please enter a playlist name");
       return;
     }
 
+    if (!user) {
+      toast.error("You must be logged in to create playlists");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("playlists")
+      .insert({
+        user_id: user.id,
+        name: newPlaylistName,
+        song_ids: [],
+      })
+      .select()
+      .single();
+
+    if (error) {
+      toast.error("Failed to create playlist");
+      return;
+    }
+
     const newPlaylist: PlaylistType = {
-      id: Date.now().toString(),
-      name: newPlaylistName,
-      songs: [],
-      createdAt: new Date(),
+      id: data.id,
+      name: data.name,
+      songs: data.song_ids,
+      createdAt: new Date(data.created_at),
     };
 
-    const updatedPlaylists = [...playlists, newPlaylist];
-    setPlaylists(updatedPlaylists);
-    localStorage.setItem("playlists", JSON.stringify(updatedPlaylists));
+    setPlaylists([newPlaylist, ...playlists]);
     setNewPlaylistName("");
     toast.success("Playlist created!");
   };
@@ -109,14 +149,23 @@ const Playlist = () => {
     if (!selectedPlaylist) return;
 
     const updatedSongs = selectedPlaylist.songs.filter(id => id !== songId);
-    const updatedPlaylist = { ...selectedPlaylist, songs: updatedSongs };
     
+    const { error } = await supabase
+      .from("playlists")
+      .update({ song_ids: updatedSongs })
+      .eq("id", selectedPlaylist.id);
+
+    if (error) {
+      toast.error("Failed to remove song from playlist");
+      return;
+    }
+
+    const updatedPlaylist = { ...selectedPlaylist, songs: updatedSongs };
     const updatedPlaylists = playlists.map(p => 
       p.id === selectedPlaylist.id ? updatedPlaylist : p
     );
     
     setPlaylists(updatedPlaylists);
-    localStorage.setItem("playlists", JSON.stringify(updatedPlaylists));
     setSelectedPlaylist(updatedPlaylist);
     toast.success("Song removed from playlist");
   };
