@@ -90,7 +90,7 @@ const About = () => {
             Subscribe to MONK ENTERTAINMENT for the latest music updates
           </p>
           <a
-            href="https://youtube.com/@monkentertainment"
+            href="https://youtube.com/@monkentertainment1163?si=zakX8xoNgDBIDTJt"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover-scale"
